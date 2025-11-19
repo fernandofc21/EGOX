@@ -271,11 +271,11 @@ def main():
     """
     Función principal
     """
-    print(" ANALIZADOR EGOCÉNTRICO")
+    print(" ANÁLISIS EGOCÉNTRICO")
     print("=" * 50)
     
     # Configurar tu Bearer Token aquí
-    BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAACjr5QEAAAAAgISylvG90Jk98lWy%2Ft%2BWln%2FtL40%3DLzaJf9OMLJmEHxM3mvjkivKKH6t6ZRzJB5Q8tFtEpXUP3QBMD3"
+    BEARER_TOKEN = "TU_BEARER_TOKEN_AQUÍ"
     
     if BEARER_TOKEN == "TU_BEARER_TOKEN_AQUÍ":
         print("❌ CONFIGURACIÓN REQUERIDA:")
