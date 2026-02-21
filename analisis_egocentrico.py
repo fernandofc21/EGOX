@@ -267,6 +267,79 @@ def plot_metrics(df, username):
     except Exception as e:
         print(f"⚠️  No se pudieron generar los gráficos: {e}")
 
+
+
+
+def get_interactions(client, username, max_results=50):
+    
+    query = f"(to:{username} OR @{username}) -from:{username}"
+    
+    response = client.search_recent_tweets(
+        query=query,
+        max_results=max_results,
+        tweet_fields=['author_id', 'created_at'],
+        expansions=['author_id'],
+        user_fields=['username']
+    )
+    
+    print("DEBUG RESPONSE:", response)
+    
+    interactions = {}
+    total_mentions = 0
+    
+    if response.data is None:
+        print("⚠️ No se encontraron tweets que mencionen a este usuario.")
+        return {}
+    
+    user_dict = {}
+    if response.includes and 'users' in response.includes:
+        for user in response.includes['users']:
+            user_dict[user.id] = user.username
+    
+    for tweet in response.data:
+        total_mentions += 1
+        author_username = user_dict.get(tweet.author_id, "desconocido")
+        interactions[author_username] = interactions.get(author_username, 0) + 1
+    
+    print(f"📢 Total menciones: {total_mentions}")
+    print(f"👥 Usuarios únicos: {len(interactions)}")
+    
+    return interactions
+
+
+
+
+def export_to_gephi(username, interactions):
+    """
+    Exporta nodos y aristas en CSV para Gephi
+    """
+    # NODOS
+    nodes = []
+    nodes.append({"Id": username, "Label": f"@{username}", "Tipo": "Ego"})
+    
+    for user in interactions:
+        nodes.append({"Id": user, "Label": f"@{user}", "Tipo": "Alter"})
+    
+    nodes_df = pd.DataFrame(nodes)
+    nodes_df.to_csv("nodes.csv", index=False)
+    
+    # ARISTAS
+    edges = []
+    for user, weight in interactions.items():
+        edges.append({
+            "Source": username,
+            "Target": user,
+            "Weight": weight,
+            "Type": "Directed"
+        })
+    
+    edges_df = pd.DataFrame(edges)
+    edges_df.to_csv("edges.csv", index=False)
+    
+    print("✅ Archivos nodes.csv y edges.csv creados para Gephi")
+
+
+
 def main():
     """
     Función principal
@@ -275,7 +348,7 @@ def main():
     print("=" * 50)
     
     # Configurar tu Bearer Token aquí
-    BEARER_TOKEN = "TU_BEARER_TOKEN_AQUÍ"
+    BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAACjr5QEAAAAA1pPf0Xyzgi%2Fb87NGlx9Fr6PWhok%3DSrmX8UMyUMbPwUibGrDWtfyAUH2Vg3q1URWx2UXsrjAxmF2D2e"
     
     if BEARER_TOKEN == "TU_BEARER_TOKEN_AQUÍ":
         print("❌ CONFIGURACIÓN REQUERIDA:")
@@ -297,7 +370,7 @@ def main():
     
     # Obtener tweets y métricas
     print(f"\n📡 Obteniendo últimos 50 tweets de @{username}...")
-    user_info, tweets = get_user_tweets_with_metrics(client, username, count=10)
+    user_info, tweets = get_user_tweets_with_metrics(client, username, count=50)
     
     if not tweets:
         print("❌ No se pudieron obtener los tweets")
@@ -321,6 +394,12 @@ def main():
         plot_metrics(df, username)
     
     print(f"\n✅ Análisis completado para @{username}")
+
+
+
+    interactions = get_interactions(client, username)
+    export_to_gephi(username, interactions)
+
 
 if __name__ == "__main__":
     main()
